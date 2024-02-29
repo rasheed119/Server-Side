@@ -8,11 +8,22 @@ import path from "path";
 const router = express.Router();
 
 router.post("/adminlogin", (req, res) => {
-  const sql = "SELECT * from admin Where email = ? and password = ?";
-  con.query(sql, [req.body.email, req.body.password], (err, result) => {
-    if (err) return res.json({ loginStatus: false, Error: "Query error" });
-    if (result.length > 0) {
-      const email = result[0].email;
+    const sql = "SELECT * from admin Where email = ?";
+    const { email, password } = req.body;
+    con.query(sql, [email], async (err, result) => {
+      if (err) {
+        return res.status(400).json({ err });
+      }
+      if (result.length === 0) {
+        return res.status(400).json({ message: "User Not Found" });
+      }
+      const comparepassword = await bcrypt.compare(
+        password,
+        result[0].password
+      );
+      if (!comparepassword) {
+        return res.status(403).json({ Error: "Invalid Password" });
+      }
       const token = jwt.sign(
         { role: "admin", email: email, id: result[0].id },
         "jwt_secret_key",
@@ -21,13 +32,23 @@ router.post("/adminlogin", (req, res) => {
       res.cookie("token", token);
       return res.json({
         loginStatus: true,
-        email: result[0].email,
-        Name: result[0].Name,
         id: result[0].id,
+        Name: result[0].Name,
+        email: result[0].email,
       });
-    } else {
-      return res.json({ loginStatus: false, Error: "wrong email or password" });
+    });
+});
+
+router.post("/add_admin", async (req, res) => {
+  const sql = "INSERT INTO admin (Name,email,password) VALUES (?,?,?)";
+  const { name, email, password } = req.body;
+  const salt = await bcrypt.genSalt(10);
+  const hashpassword = await bcrypt.hash(password, salt);
+  con.query(sql, [name, email, hashpassword], (err, result) => {
+    if (err) {
+      return res.status(400).json({ error: err });
     }
+    return res.status(200).json({ message: "Admin added", result });
   });
 });
 
@@ -169,8 +190,7 @@ router.put("/edit_admin/:id", (req, res) => {
     con.query(sql, [req.body.name, req.body.email, +id], (err, result) => {
       if (err) {
         console.log(err);
-        return res
-          .json({ Status: false, Error: "Query Error" + err });
+        return res.json({ Status: false, Error: "Query Error" + err });
       }
       return res.json({ Status: true, Result: result });
     });
