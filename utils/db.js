@@ -3,7 +3,7 @@ import mysql from 'mysql'
 const con = mysql.createConnection({
     host: "localhost",
     user: "root",
-    password: "Rasheed0$",
+    password: process.env.PASS,
     database: "employee_management_system"
 })
 
