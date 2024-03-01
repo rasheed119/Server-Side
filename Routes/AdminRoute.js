@@ -4,39 +4,37 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import multer from "multer";
 import path from "path";
+import { log } from "console";
 
 const router = express.Router();
 
 router.post("/adminlogin", (req, res) => {
-    const sql = "SELECT * from admin Where email = ?";
-    const { email, password } = req.body;
-    con.query(sql, [email], async (err, result) => {
-      if (err) {
-        return res.status(400).json({ err });
-      }
-      if (result.length === 0) {
-        return res.status(400).json({ message: "User Not Found" });
-      }
-      const comparepassword = await bcrypt.compare(
-        password,
-        result[0].password
-      );
-      if (!comparepassword) {
-        return res.status(403).json({ Error: "Invalid Password" });
-      }
-      const token = jwt.sign(
-        { role: "admin", email: email, id: result[0].id },
-        "jwt_secret_key",
-        { expiresIn: "1d" }
-      );
-      res.cookie("token", token);
-      return res.json({
-        loginStatus: true,
-        id: result[0].id,
-        Name: result[0].Name,
-        email: result[0].email,
-      });
+  const sql = "SELECT * from admin Where email = ?";
+  const { email, password } = req.body;
+  con.query(sql, [email], async (err, result) => {
+    if (err) {
+      return res.status(400).json({ err });
+    }
+    if (result.length === 0) {
+      return res.status(400).json({ message: "User Not Found" });
+    }
+    const comparepassword = await bcrypt.compare(password, result[0].password);
+    if (!comparepassword) {
+      return res.status(403).json({ Error: "Invalid Password" });
+    }
+    const token = jwt.sign(
+      { role: "admin", email: email, id: result[0].id },
+      "jwt_secret_key",
+      { expiresIn: "1d" }
+    );
+    res.cookie("token", token);
+    return res.json({
+      loginStatus: true,
+      id: result[0].id,
+      Name: result[0].Name,
+      email: result[0].email,
     });
+  });
 });
 
 router.post("/add_admin", async (req, res) => {
@@ -90,7 +88,8 @@ router.post("/add_employee", upload.single("image"), (req, res) => {
     (name,email,password, address, salary,image, category_id) 
     VALUES (?)`;
   bcrypt.hash(req.body.password, 10, (err, hash) => {
-    if (err) return res.json({ Status: false, Error: "Query Error" });
+    if (err)
+      return res.status(400).json({ Status: false, Error: "Query Error" });
     const values = [
       req.body.name,
       req.body.email,
@@ -101,14 +100,18 @@ router.post("/add_employee", upload.single("image"), (req, res) => {
       +req.body.category_id,
     ];
     con.query(sql, [values], (err, result) => {
-      if (err) return res.json({ Status: false, Error: err });
+      if (err) return res.status(400).json({ Status: false, Error: err });
       return res.json({ Status: true });
     });
   });
 });
 
 router.get("/employee", (req, res) => {
-  const sql = "SELECT * FROM employee";
+  const sql = `SELECT employee.name , employee.id,
+              employee.email ,employee.salary,employee.image ,category.name as role 
+              FROM employee 
+              join category 
+              on category.id = employee.category_id`;
   con.query(sql, (err, result) => {
     if (err) return res.json({ Status: false, Error: "Query Error" });
     return res.json({ Status: true, Result: result });
