@@ -4,7 +4,6 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import multer from "multer";
 import path from "path";
-import { log } from "console";
 
 const router = express.Router();
 
@@ -120,7 +119,12 @@ router.get("/employee", (req, res) => {
 
 router.get("/employee/:id", (req, res) => {
   const id = req.params.id;
-  const sql = "SELECT * FROM employee WHERE id = ?";
+  const sql = `SELECT employee.name , employee.id,
+                employee.email ,employee.salary,employee.address,employee.image,employee.category_id ,category.name as role 
+                FROM employee 
+                join category 
+                on category.id = employee.category_id 
+                where employee.id = ?`;
   con.query(sql, [id], (err, result) => {
     if (err) return res.json({ Status: false, Error: "Query Error" });
     return res.json({ Status: true, Result: result });
