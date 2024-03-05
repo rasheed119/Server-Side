@@ -63,6 +63,47 @@ router.get("/detail/:id", (req, res) => {
   });
 });
 
+router.post("/apply_leave", (req, res) => {
+  const sql = `INSERT INTO leave_table (type, \`From\`, \`To\`, Reason, Contact, employee_id) VALUES(?,?,?,?,?,?)`;
+  const { type, From, To, Reason, Contact, employee_id } = req.body;
+  con.query(
+    sql,
+    [type, From, To, Reason, Contact, employee_id],
+    (err, result) => {
+      if (err) {
+        return res
+          .status(400)
+          .json({ Error: err, message: "INSERT LEAVE FETCH ERROR" });
+      }
+      res.status(200).json({ message: "Leave Applied Successfully" });
+    }
+  );
+});
+
+router.get("/leave_history/:id", (req, res) => {
+  const sql = `SELECT * FROM leave_table WHERE employee_id=?`;
+  const { id } = req.params;
+  con.query(sql, [id], (err, result) => {
+    if (err) {
+      return res.status(400).json({ message: "LEAVE HISTORY FETCH ERROR" });
+    }
+    res.status(200).json({ leave_history: result });
+  });
+});
+
+router.post("/update_leave", (req, res) => {
+  const sql = `update leave_table set status=? where id=?`;
+  const { status_msg, id } = req.body;
+  con.query(sql, [status_msg, id], (err) => {
+    if (err) {
+      return res
+        .status(400)
+        .json({ message: "UPDATE LEAVE SET ERROR", error: err });
+    }
+    res.status(200).json({ message : "Status Updated" })
+  });
+});
+
 router.get("/logout", (req, res) => {
   res.clearCookie("token");
   return res.json({ Status: true });
