@@ -92,9 +92,9 @@ router.get("/leave_history/:id", (req, res) => {
 });
 
 router.post("/update_leave", (req, res) => {
-  const sql = `update leave_table set status=? where id=?`;
-  const { status_msg, id } = req.body;
-  con.query(sql, [status_msg, id], (err) => {
+  const sql = `update leave_table set status=?,approved_by=? where id=?`;
+  const { status_msg, id,admin_id } = req.body;
+  con.query(sql, [status_msg,admin_id, id], (err) => {
     if (err) {
       return res
         .status(400)

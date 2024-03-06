@@ -211,4 +211,19 @@ router.get("/logout", (req, res) => {
   return res.json({ Status: true });
 });
 
+router.get("/pending_leave", (req, res) => {
+  const sql = `SELECT employee.name,leave_table.id,
+    leave_table.type, leave_table.From,leave_table.To, 
+    leave_table.Reason FROM leave_table 
+    join employee on employee.id = leave_table.employee_id where Status="Pending"`;
+  con.query(sql, (err, result) => {
+    if (err) {
+      return res
+        .status(400)
+        .json({ message: "PENDING LEAVE FETCH ERROR", error: err });
+    }
+    res.status(200).json({ pending_leave: result });
+  });
+});
+
 export { router as adminRouter };
