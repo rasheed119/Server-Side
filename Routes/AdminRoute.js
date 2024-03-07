@@ -84,8 +84,8 @@ const upload = multer({
 
 router.post("/add_employee", upload.single("image"), (req, res) => {
   const sql = `INSERT INTO employee 
-    (name,email,password, address, salary,image, category_id) 
-    VALUES (?)`;
+                (name,email,password, address, salary,image, category_id) 
+                VALUES (?)`;
   bcrypt.hash(req.body.password, 10, (err, hash) => {
     if (err)
       return res.status(400).json({ Status: false, Error: "Query Error" });
@@ -152,6 +152,12 @@ router.put("/edit_employee/:id", (req, res) => {
 router.delete("/delete_employee/:id", (req, res) => {
   const id = req.params.id;
   const sql = "delete from employee where id = ?";
+  const leave_sql = "delete from leave_table where employee_id=?";
+  con.query(leave_sql,[id],(err)=>{
+    if(err){
+      return res.status(400).json({ message : "DELETE EMPLOYEE QUERY ERROR" })
+    }
+  })
   con.query(sql, [id], (err, result) => {
     if (err) return res.json({ Status: false, Error: "Query Error" + err });
     return res.json({ Status: true, Result: result });
