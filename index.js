@@ -5,13 +5,15 @@ import { EmployeeRouter } from "./Routes/EmployeeRoute.js";
 import Jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
+import swaggerJSDoc from "swagger-jsdoc";
+import swaggerui from "swagger-ui-express";
 
 dotenv.config();
 
 const app = express();
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: ["http://localhost:5173", "https://front-end-beta-bice.vercel.app"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
@@ -45,6 +47,23 @@ app.get("/verify", verifyUser, (req, res) => {
     email: req.email,
   });
 });
+
+const spaces = swaggerJSDoc({
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "Employee Management System API",
+      version: "1.0.0",
+    },
+    servers: [
+      {
+        url: "http://localhost:3000",
+      },
+    ],
+  },
+  apis: ["./Routes/*.js"],
+});
+app.use("/api-docs", swaggerui.serve, swaggerui.setup(spaces));
 
 app.listen(3000, () => {
   console.log("Server is running");

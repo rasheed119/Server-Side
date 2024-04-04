@@ -153,11 +153,11 @@ router.delete("/delete_employee/:id", (req, res) => {
   const id = req.params.id;
   const sql = "delete from employee where id = ?";
   const leave_sql = "delete from leave_table where employee_id=?";
-  con.query(leave_sql,[id],(err)=>{
-    if(err){
-      return res.status(400).json({ message : "DELETE EMPLOYEE QUERY ERROR" })
+  con.query(leave_sql, [id], (err) => {
+    if (err) {
+      return res.status(400).json({ message: "DELETE EMPLOYEE QUERY ERROR" });
     }
-  })
+  });
   con.query(sql, [id], (err, result) => {
     if (err) return res.json({ Status: false, Error: "Query Error" + err });
     return res.json({ Status: true, Result: result });
@@ -212,6 +212,37 @@ router.put("/edit_admin/:id", (req, res) => {
   }
 });
 
+router.post("/create_announcement", (req, res) => {
+  const sql = `INSERT INTO announcements (Title,message,created_by,important) VALUES (?,?,?,?)`;
+  var { id, title, message, important } = req.body;
+  important = important ? 1 : 0;
+  con.query(sql, [title, message, id, important], (err, result) => {
+    if (err) {
+      return res.status(400).json({
+        Error: err.message,
+        message: "CREATE ANNOUNCEMENT QUERY ERROR",
+      });
+    }
+    res
+      .status(200)
+      .json({ message: "Announcement Created Successfully", result });
+  });
+});
+
+router.get("/getAnnouncement/:id", (req, res) => {
+  const sql = `SELECT * FROM announcements WHERE created_by = ? ORDER BY created_at DESC`;
+  const { id } = req.params;
+  con.query(sql, [id], (err, result) => {
+    if (err) {
+      return res.status(400).json({
+        Error: err.message,
+        message: "FETCH ANNOUNCEMENT QUERY ERROR",
+      });
+    }
+    res.status(200).json({ announcements: result });
+  });
+});
+
 router.get("/logout", (req, res) => {
   res.clearCookie("token");
   return res.json({ Status: true });
@@ -229,6 +260,45 @@ router.get("/pending_leave", (req, res) => {
         .json({ message: "PENDING LEAVE FETCH ERROR", error: err });
     }
     res.status(200).json({ pending_leave: result });
+  });
+});
+
+router.put("/edit_announcement", (req, res) => {
+  const sql = `UPDATE announcements SET Title =?, message =?, important =? WHERE id =?`;
+  const getsql = `SELECT * FROM announcements WHERE id =?`;
+  var { id, title, message, important } = req.body;
+  con.query(sql, [title, message, important, +id], (err) => {
+    if (err) {
+      return res.status(400).json({
+        Error: err.message,
+        message: "EDIT ANNOUNCEMENT QUERY ERROR",
+      });
+    }
+  });
+  con.query(getsql, [id], (err, result) => {
+    if (err) {
+      return res.status(400).json({
+        Error: err.message,
+        message: "GET ANNOUNCEMENT QUERY ERROR",
+      });
+    }
+    res.status(200).json({ result });
+  });
+});
+
+router.delete("/delete_announcement/:id", (req, res) => {
+  const sql = `DELETE FROM announcements WHERE id =?`;
+  var { id } = req.params;
+  con.query(sql, [id], (err, result) => {
+    if (err) {
+      return res.status(400).json({
+        Error: err.message,
+        message: "DELETE ANNOUNCEMENT QUERY ERROR",
+      });
+    }
+    res
+      .status(200)
+      .json({ message: "Announcement Deleted Successfully", result });
   });
 });
 
